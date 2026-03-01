@@ -302,12 +302,6 @@ export default function Dashboard() {
                   <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
               </div>
-              <span className="bg-[#f0fdf4] text-[#16a34a] text-[11.5px] font-medium px-2.5 py-1 rounded-[20px] flex items-center gap-1">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="18 15 12 9 6 15"/>
-                </svg>
-                +12.5%
-              </span>
             </div>
             <div className="text-[26px] font-bold text-[#111827] tracking-tighter">₹{summary.today_sales?.toFixed(2) || '0.00'}</div>
             <div className="text-[12.5px] text-[#9ca3af]">Today's Sales</div>

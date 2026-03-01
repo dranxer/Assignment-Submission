@@ -10,6 +10,7 @@ from app.database import Base, engine, SessionLocal
 from app.routes_dashboard import router as dashboard_router
 from app.routes_inventory import router as inventory_router
 from app.routes_sales import router as sales_router
+from api.routes_admin import router as admin_router
 
 # Initialize database tables (lazy - only on first request)
 def init_db():
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(dashboard_router)
 app.include_router(inventory_router)
 app.include_router(sales_router)
+app.include_router(admin_router)
 
 
 @app.get("/")
