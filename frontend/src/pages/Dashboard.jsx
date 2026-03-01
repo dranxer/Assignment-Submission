@@ -322,7 +322,6 @@ export default function Dashboard() {
                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                 </svg>
               </div>
-              <span className="bg-[#eff6ff] text-[#2563eb] text-[11.5px] font-medium px-2.5 py-1 rounded-[20px]">32 Orders</span>
             </div>
             <div className="text-[26px] font-bold text-[#111827] tracking-tighter">{summary.items_sold || 0}</div>
             <div className="text-[12.5px] text-[#9ca3af]">Items Sold Today</div>
@@ -338,7 +337,6 @@ export default function Dashboard() {
                   <line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
               </div>
-              <span className="bg-[#fff7ed] text-[#ea580c] text-[11.5px] font-medium px-2.5 py-1 rounded-[20px]">Action Needed</span>
             </div>
             <div className="text-[26px] font-bold text-[#111827] tracking-tighter">{summary.low_stock_count || 0}</div>
             <div className="text-[12.5px] text-[#9ca3af]">Low Stock Items</div>
@@ -354,7 +352,6 @@ export default function Dashboard() {
                   <line x1="12" y1="22.08" x2="12" y2="12"/>
                 </svg>
               </div>
-              <span className="bg-[#faf5ff] text-[#9333ea] text-[11.5px] font-medium px-2.5 py-1 rounded-[20px]">5 Pending</span>
             </div>
             <div className="text-[26px] font-bold text-[#111827] tracking-tighter">₹{summary.purchase_orders?.toFixed(2) || '0.00'}</div>
             <div className="text-[12.5px] text-[#9ca3af]">Purchase Orders</div>
