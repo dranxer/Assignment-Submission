@@ -12,6 +12,8 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState(null);
+  const [showSaleModal, setShowSaleModal] = useState(false);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     generic_name: "",
@@ -22,6 +24,16 @@ export default function Dashboard() {
     cost_price: 0,
     mrp: 0,
     supplier: "",
+  });
+  const [saleForm, setSaleForm] = useState({
+    medicine_id: "",
+    quantity: 1,
+  });
+  const [purchaseForm, setPurchaseForm] = useState({
+    medicine_id: "",
+    quantity: 10,
+    cost: 0,
+    expected_delivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
 
   const fetchMedicines = async () => {
@@ -103,11 +115,12 @@ export default function Dashboard() {
     try {
       const payload = {
         ...formData,
-        expiry_date: new Date(formData.expiry_date).toISOString(),
+        expiry_date: new Date(formData.expiry_date).toISOString().replace('Z', ''),
         quantity: parseInt(formData.quantity),
         cost_price: parseFloat(formData.cost_price),
         mrp: parseFloat(formData.mrp),
       };
+      console.log("Sending payload:", payload);
       if (editingMedicine) {
         await api.put(`/inventory/${editingMedicine.id}`, payload);
       } else {
@@ -115,14 +128,112 @@ export default function Dashboard() {
       }
       setShowModal(false);
       fetchMedicines();
+      alert("Medicine saved successfully!");
     } catch (err) {
-      alert(err.response?.data?.detail || "Failed to save medicine");
+      console.error("Error saving medicine:", err);
+      console.error("Error response:", err.response);
+      const errorMsg = err.response?.data?.detail || err.message || "Failed to save medicine";
+      alert(errorMsg);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleExport = () => {
+    // Export inventory data as CSV
+    const headers = ["Name", "Generic Name", "Category", "Batch No", "Expiry Date", "Quantity", "Cost Price", "MRP", "Supplier", "Status"];
+    const csvData = inventoryData.map(med => [
+      med.name,
+      med.generic_name,
+      med.category,
+      med.batch_no,
+      new Date(med.expiry_date).toLocaleDateString(),
+      med.quantity,
+      med.cost_price.toFixed(2),
+      med.mrp.toFixed(2),
+      med.supplier,
+      med.status
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `inventory_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const handleNewSale = () => {
+    setShowSaleModal(true);
+  };
+
+  const handleNewPurchase = () => {
+    setShowPurchaseModal(true);
+  };
+
+  const handleSaleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const med = inventoryData.find(m => m.id === parseInt(saleForm.medicine_id));
+      if (!med) {
+        alert("Medicine not found");
+        return;
+      }
+      if (med.quantity < saleForm.quantity) {
+        alert("Insufficient stock");
+        return;
+      }
+      const amount = med.mrp * saleForm.quantity;
+      await api.post("/sales", {
+        medicine_id: med.id,
+        medicine_name: med.name,
+        quantity: saleForm.quantity,
+        amount: amount,
+      });
+      setShowSaleModal(false);
+      setSaleForm({ medicine_id: "", quantity: 1 });
+      // Refresh data
+      fetchMedicines();
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to record sale");
+    }
+  };
+
+  const handlePurchaseSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const med = inventoryData.find(m => m.id === parseInt(purchaseForm.medicine_id));
+      if (!med) {
+        alert("Medicine not found");
+        return;
+      }
+      await api.post("/purchase-orders", {
+        medicine_id: med.id,
+        medicine_name: med.name,
+        quantity: purchaseForm.quantity,
+        cost: purchaseForm.cost,
+        expected_delivery: purchaseForm.expected_delivery,
+        status: "Pending",
+      });
+      setShowPurchaseModal(false);
+      setPurchaseForm({
+        medicine_id: "",
+        quantity: 10,
+        cost: 0,
+        expected_delivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      });
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to create purchase order");
+    }
   };
 
   if (loading) {
@@ -163,7 +274,7 @@ export default function Dashboard() {
             <p className="text-[13px] text-[#9ca3af] mt-1">Manage inventory, sales, and purchase orders</p>
           </div>
           <div className="flex gap-2.5">
-            <button className="flex items-center gap-1.5 border border-[#d1d5db] bg-white text-[#374151] text-[13px] font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+            <button onClick={handleExport} className="flex items-center gap-1.5 border border-[#d1d5db] bg-white text-[#374151] text-[13px] font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
@@ -301,13 +412,13 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="flex gap-2">
-              <button className="flex items-center gap-1 bg-[#2563eb] text-white text-[12.5px] font-medium px-3.5 py-1.5 rounded-[7px] border-none">
+              <button onClick={handleNewSale} className="flex items-center gap-1 bg-[#2563eb] text-white text-[12.5px] font-medium px-3.5 py-1.5 rounded-[7px] border-none">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
                 New Sale
               </button>
-              <button className="flex items-center gap-1 bg-white text-[#374151] text-[12.5px] font-medium px-3.5 py-1.5 rounded-[7px] border border-[#e5e7eb]">
+              <button onClick={handleNewPurchase} className="flex items-center gap-1 bg-white text-[#374151] text-[12.5px] font-medium px-3.5 py-1.5 rounded-[7px] border border-[#e5e7eb]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
@@ -685,6 +796,139 @@ export default function Dashboard() {
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
                     {editingMedicine ? "Update Medicine" : "Add Medicine"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* NEW SALE MODAL */}
+        {showSaleModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800">Record New Sale</h2>
+              </div>
+              <form onSubmit={handleSaleSubmit} className="p-6">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Medicine *</label>
+                  <select
+                    value={saleForm.medicine_id}
+                    onChange={(e) => setSaleForm({ ...saleForm, medicine_id: e.target.value })}
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
+                  >
+                    <option value="">Choose a medicine...</option>
+                    {inventoryData.filter(m => m.quantity > 0).map(med => (
+                      <option key={med.id} value={med.id}>
+                        {med.name} (Stock: {med.quantity}, MRP: ₹{med.mrp.toFixed(2)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
+                  <input
+                    type="number"
+                    value={saleForm.quantity}
+                    onChange={(e) => setSaleForm({ ...saleForm, quantity: parseInt(e.target.value) || 0 })}
+                    required
+                    min="1"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowSaleModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Record Sale
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* NEW PURCHASE MODAL */}
+        {showPurchaseModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800">Create Purchase Order</h2>
+              </div>
+              <form onSubmit={handlePurchaseSubmit} className="p-6">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Medicine *</label>
+                  <select
+                    value={purchaseForm.medicine_id}
+                    onChange={(e) => setPurchaseForm({ ...purchaseForm, medicine_id: e.target.value })}
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
+                  >
+                    <option value="">Choose a medicine...</option>
+                    {inventoryData.map(med => (
+                      <option key={med.id} value={med.id}>
+                        {med.name} (Current Stock: {med.quantity})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
+                  <input
+                    type="number"
+                    value={purchaseForm.quantity}
+                    onChange={(e) => setPurchaseForm({ ...purchaseForm, quantity: parseInt(e.target.value) || 0 })}
+                    required
+                    min="1"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Total Cost (₹) *</label>
+                  <input
+                    type="number"
+                    value={purchaseForm.cost}
+                    onChange={(e) => setPurchaseForm({ ...purchaseForm, cost: parseFloat(e.target.value) || 0 })}
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
+                  />
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Expected Delivery *</label>
+                  <input
+                    type="date"
+                    value={purchaseForm.expected_delivery}
+                    onChange={(e) => setPurchaseForm({ ...purchaseForm, expected_delivery: e.target.value })}
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowPurchaseModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  >
+                    Create Order
                   </button>
                 </div>
               </form>

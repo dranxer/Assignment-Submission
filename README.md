@@ -390,34 +390,61 @@ SwasthiQ/
 
 ## 🌍 Deployment
 
-### Frontend (Vercel / Netlify)
+### Quick Deploy Options
 
-1. Build the frontend:
+#### Option 1: Render (Recommended - Free)
+1. Push code to GitHub
+2. Go to https://render.com and create account
+3. Click **New +** → **Blueprint**
+4. Connect your GitHub repo
+5. Render auto-deploys using `render.yaml`
+
+**Live URLs:**
+- Backend: `https://your-app.onrender.com`
+- Frontend: `https://your-app-web.onrender.com`
+
+#### Option 2: Docker Deployment
+```bash
+# Development (SQLite)
+docker-compose up -d
+
+# Production (PostgreSQL)
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### Option 3: Vercel (Frontend) + Render (Backend)
+1. Deploy backend on Render (see Option 1)
+2. Deploy frontend on Vercel:
    ```bash
+   cd frontend
    npm run build
+   # Connect to Vercel with VITE_API_URL env variable
    ```
-
-2. Deploy the `dist` folder to Vercel or Netlify
-
-3. Update API base URL in `src/api/axios.js` to production URL
-
-### Backend (Render / Railway / Fly.io)
-
-1. Set environment variables:
-   - `DATABASE_URL` (for PostgreSQL)
-
-2. Deploy using platform-specific instructions
-
-3. Run migrations on deployment
 
 ### Environment Variables
 
-**Backend:**
+**Backend (`.env`):**
 ```bash
 DATABASE_URL=sqlite:///./pharmacy.db
-# or for PostgreSQL:
+# For production:
 # DATABASE_URL=postgresql://user:pass@host:5432/dbname
+CORS_ORIGINS=https://your-frontend.com
+SECRET_KEY=your-secret-key
 ```
+
+**Frontend (`.env.production`):**
+```bash
+VITE_API_URL=https://your-backend-api.com
+```
+
+### Pre-Deployment Checklist
+- [ ] Update `DATABASE_URL` for production (PostgreSQL)
+- [ ] Set `CORS_ORIGINS` to your frontend domain
+- [ ] Generate a secure `SECRET_KEY`
+- [ ] Test all API endpoints
+- [ ] Build frontend for production
+
+📖 **See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions**
 
 ## 🧪 Testing
 

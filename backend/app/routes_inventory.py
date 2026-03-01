@@ -93,12 +93,43 @@ def get_medicine(medicine_id: int, db: Session = Depends(get_db)):
 @router.post("", response_model=MedicineResponse, status_code=status.HTTP_201_CREATED)
 def create_medicine(medicine: MedicineCreate, db: Session = Depends(get_db)):
     """Add a new medicine to inventory"""
+    # Check if medicine with same name already exists
+    existing = db.query(Medicine).filter(Medicine.name == medicine.name).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Medicine '{medicine.name}' already exists")
+
     # Validate expiry date
     if medicine.expiry_date < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Expiry date cannot be in the past")
 
-    db_medicine = Medicine(**medicine.dict())
-    update_medicine_status(db, db_medicine)
+    # Determine status based on quantity and expiry
+    expiry_date = medicine.expiry_date
+    quantity = medicine.quantity
+    
+    if expiry_date < datetime.utcnow():
+        status_val = "Expired"
+    elif quantity == 0:
+        status_val = "Out of Stock"
+    elif quantity < 10:
+        status_val = "Low Stock"
+    else:
+        status_val = "Active"
+
+    db_medicine = Medicine(
+        name=medicine.name,
+        generic_name=medicine.generic_name,
+        category=medicine.category,
+        batch_no=medicine.batch_no,
+        expiry_date=medicine.expiry_date,
+        quantity=medicine.quantity,
+        cost_price=medicine.cost_price,
+        mrp=medicine.mrp,
+        supplier=medicine.supplier,
+        status=status_val
+    )
+    db.add(db_medicine)
+    db.commit()
+    db.refresh(db_medicine)
     return db_medicine
 
 
