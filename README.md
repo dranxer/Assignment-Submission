@@ -2,6 +2,23 @@
 
 A complete Pharmacy Management System with a FastAPI backend and React frontend, featuring real-time API integration, proper data validation, and a clean CRM-style UI.
 
+## 🚀 Deploy Now
+
+### One-Click Deploy to Vercel (Frontend + Backend)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+
+**Quick Setup:**
+```bash
+npm install -g vercel
+vercel login
+vercel --prod
+```
+
+📖 **See [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md) for complete guide**
+
+---
+
 ## 📌 Overview
 
 This project implements a simplified Pharmacy Module consisting of:

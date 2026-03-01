@@ -5,9 +5,16 @@ from datetime import datetime
 import enum
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./pharmacy.db")
+# Support multiple database URLs for different platforms
+DATABASE_URL = os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL", "sqlite:///./pharmacy.db")
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
+# For Vercel serverless, use connection args only for SQLite
+if "sqlite" in DATABASE_URL:
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    # PostgreSQL (production, Vercel, etc.)
+    engine = create_engine(DATABASE_URL)
+    
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
