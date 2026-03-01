@@ -6,14 +6,19 @@ import enum
 import os
 
 # Support multiple database URLs for different platforms
-DATABASE_URL = os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL", "sqlite:///./pharmacy.db")
+DATABASE_URL = (
+    os.getenv("POSTGRES_URL") or 
+    os.getenv("DATABASE_URL") or 
+    os.getenv("POSTGRES_PRISMA_URL") or
+    "sqlite:///./pharmacy.db"
+)
 
 # For Vercel serverless, use connection args only for SQLite
 if "sqlite" in DATABASE_URL:
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
     # PostgreSQL (production, Vercel, etc.)
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
     
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import init_db
+from app.database import Base, engine
 from app.routes_dashboard import router as dashboard_router
 from app.routes_inventory import router as inventory_router
 from app.routes_sales import router as sales_router
 import os
 
-# Initialize database
-init_db()
+# Initialize database tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Pharmacy CRM API", version="1.0.0")
 
