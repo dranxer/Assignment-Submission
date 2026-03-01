@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Enum
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Enum, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -13,12 +13,20 @@ DATABASE_URL = (
     "sqlite:///./pharmacy.db"
 )
 
-# For Vercel serverless, use connection args only for SQLite
-if "sqlite" in DATABASE_URL:
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# For Vercel serverless with PostgreSQL
+if "postgresql" in DATABASE_URL:
+    # Add connection timeout and pooling for serverless
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_timeout=30,
+        connect_args={"connect_timeout": 10}
+    )
 else:
-    # PostgreSQL (production, Vercel, etc.)
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+    # SQLite for local development
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
     
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

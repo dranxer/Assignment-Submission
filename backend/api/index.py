@@ -6,13 +6,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import Base, engine
+from app.database import Base, engine, SessionLocal
 from app.routes_dashboard import router as dashboard_router
 from app.routes_inventory import router as inventory_router
 from app.routes_sales import router as sales_router
 
-# Initialize database tables
-Base.metadata.create_all(bind=engine)
+# Initialize database tables (lazy - only on first request)
+def init_db():
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"DB init error: {e}")
+
+init_db()
 
 app = FastAPI(title="Pharmacy CRM API", version="1.0.0")
 
@@ -38,4 +44,11 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    try:
+        # Test database connection
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        return {"status": "healthy", "db": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}
