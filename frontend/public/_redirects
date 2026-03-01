@@ -1,0 +1,9 @@
+# Netlify redirects file
+# This file is copied to /dist/_redirects during build
+
+# API proxy to Render backend
+# Replace YOUR_BACKEND_URL with your actual Render backend URL
+/api/*  https://YOUR_BACKEND_URL.onrender.com/api/:splat  200
+
+# SPA fallback
+/*  /index.html  200

@@ -392,18 +392,39 @@ SwasthiQ/
 
 ### Quick Deploy Options
 
-#### Option 1: Render (Recommended - Free)
-1. Push code to GitHub
-2. Go to https://render.com and create account
-3. Click **New +** → **Blueprint**
-4. Connect your GitHub repo
-5. Render auto-deploys using `render.yaml`
+#### Option 1: Netlify + Render (Recommended - Free) ⭐
+**Frontend on Netlify, Backend on Render**
+
+1. **Deploy Backend on Render:**
+   - Push to GitHub
+   - Go to https://render.com → New Blueprint
+   - Connect repo → Auto-deploys with PostgreSQL
+
+2. **Deploy Frontend on Netlify:**
+   ```bash
+   cd frontend
+   npm install -g netlify-cli
+   netlify login
+   netlify init
+   netlify deploy --prod
+   ```
+
+3. **Update URLs:**
+   - In `frontend/netlify.toml`: Replace `YOUR_BACKEND_URL` with Render URL
+   - In Render: Add Netlify URL to `CORS_ORIGINS`
 
 **Live URLs:**
+- Frontend: `https://your-app.netlify.app`
 - Backend: `https://your-app.onrender.com`
-- Frontend: `https://your-app-web.onrender.com`
 
-#### Option 2: Docker Deployment
+📖 **See [DEPLOY_NETLIFY.md](DEPLOY_NETLIFY.md) for detailed guide**
+
+#### Option 2: Render All-in-One
+1. Push to GitHub
+2. Deploy on Render using `render.yaml`
+3. Both frontend & backend deploy together
+
+#### Option 3: Docker Deployment
 ```bash
 # Development (SQLite)
 docker-compose up -d
@@ -411,15 +432,6 @@ docker-compose up -d
 # Production (PostgreSQL)
 docker-compose -f docker-compose.prod.yml up -d
 ```
-
-#### Option 3: Vercel (Frontend) + Render (Backend)
-1. Deploy backend on Render (see Option 1)
-2. Deploy frontend on Vercel:
-   ```bash
-   cd frontend
-   npm run build
-   # Connect to Vercel with VITE_API_URL env variable
-   ```
 
 ### Environment Variables
 

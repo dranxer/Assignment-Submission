@@ -2,14 +2,24 @@
 
 ## Quick Deployment Options
 
-### Option 1: Render (Free - Recommended for Demo)
-**Best for:** Quick demo, free tier, full-stack app
+### Option 1: Netlify + Render (Free - Recommended) ⭐
+**Best for:** Production-ready free hosting, fast CDN
 
-### Option 2: Railway (Free Trial)
-**Best for:** Easy deployment, PostgreSQL included
+- **Frontend:** Netlify (Free, 100GB bandwidth)
+- **Backend:** Render (Free PostgreSQL)
 
-### Option 3: Vercel + Render
-**Best for:** Production (Frontend on Vercel, Backend on Render)
+📖 **See [DEPLOY_NETLIFY.md](DEPLOY_NETLIFY.md) for step-by-step guide**
+
+### Option 2: Render All-in-One (Free)
+**Best for:** Simplest deployment, single platform
+
+- Deploy both frontend & backend on Render using `render.yaml`
+
+### Option 3: Vercel + Render (Free)
+**Best for:** React-optimized hosting
+
+- **Frontend:** Vercel (Free, optimized for React)
+- **Backend:** Render (Free PostgreSQL)
 
 ### Option 4: Docker + VPS
 **Best for:** Full control, production deployment
