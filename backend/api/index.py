@@ -1,10 +1,15 @@
+import sys
+import os
+
+# Add backend folder to Python path for Vercel serverless
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.routes_dashboard import router as dashboard_router
 from app.routes_inventory import router as inventory_router
 from app.routes_sales import router as sales_router
-import os
 
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
